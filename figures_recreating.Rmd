@@ -1,0 +1,391 @@
+---
+title: "Recreating 19th-century originals (Nightingale • Playfair • Minard)"
+output: html_document
+date: "`r Sys.Date()`"
+author: "Historical Visualization Recreation Project"
+---
+
+## Historical Statistical Graphics Recreation
+
+This notebook recreates three canonical nineteenth-century statistical visualizations with careful attention to historical accuracy and design fidelity:
+
+1. **Florence Nightingale's Polar Area Diagram (1858)** - Crimean War mortality causes
+2. **William Playfair's Trade Balance Chart (1786)** - East India Company imports/exports  
+3. **Charles Joseph Minard's Flow Map (1869)** - Napoleon's 1812 Russian campaign
+
+Each recreation attempts to capture the original's:
+- Visual encoding choices (colors, scales, coordinate systems)
+- Typography and labeling style
+- Historical context and significance
+- Data-ink ratio and aesthetic decisions
+
+All figures are exported to both the `outputs/` directory and project root for compatibility with the broader evaluation framework.
+
+```{r 00-setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.retina = 2)
+
+# Work around knitr/evaluate '!continue' bug if a 'continue' object is present
+if (exists("continue", inherits = TRUE)) try(remove(list = "continue", envir = .GlobalEnv), silent = TRUE)
+
+# Clean environment for chunk execution
+rm(list = setdiff(ls(), character(0)))
+
+
+```
+
+
+```{r }
+required <- c("tidyverse", "lubridate", "patchwork")
+
+need_install <- setdiff(required, rownames(installed.packages()))
+if (length(need_install)) install.packages(need_install)
+
+invisible(lapply(required, library, character.only = TRUE))
+
+dir.create("outputs", showWarnings = FALSE)
+
+need <- function(path) {
+  if (!file.exists(path)) stop("Missing file: ", path,
+                               "\nRun collect_data.Rmd first.", call. = FALSE)
+  path
+}
+
+```
+
+```{r nightingale-recreation}
+# ==== NIGHTINGALE POLAR AREA DIAGRAM ====
+# Recreating Florence Nightingale's famous "coxcomb" diagram showing
+# causes of mortality during the Crimean War. The original used wedge
+# areas proportional to death rates, with colors distinguishing causes.
+
+raw_path <- need("case1_nightingale/data/nightingale_raw.csv")
+ng_raw <- readr::read_csv(raw_path, show_col_types = FALSE)
+
+# Standardize column names
+names(ng_raw) <- names(ng_raw) |>
+  stringr::str_replace_all(" ", "_") |>
+  tolower()
+
+# Create proper date column if missing
+if (!"date" %in% names(ng_raw)) {
+  yr  <- dplyr::coalesce(ng_raw$year, ng_raw$Year)
+  mon <- dplyr::coalesce(ng_raw$month, ng_raw$Month)
+  mon_num <- if (is.character(mon) || is.factor(mon)) match(substr(as.character(mon),1,3), month.abb) else as.integer(mon)
+  ng_raw$date <- lubridate::make_date(year = as.integer(yr), month = mon_num, day = 15)
+}
+
+# Verify we have the three cause categories
+cause_cols <- intersect(c("disease","wounds","other"), names(ng_raw))
+stopifnot(length(cause_cols) == 3)
+
+# Prepare data for polar plot
+# Note: Nightingale's original started from April 1854 clockwise
+ng <- ng_raw |>
+  arrange(date) |>
+  mutate(
+    # Create month labels as in original
+    month_label = paste0(format(date, "%b"), " ", format(date, "%Y")),
+    month_label = factor(month_label, levels = unique(month_label)),
+    # Add month abbreviation for labeling
+    month_abbr = format(date, "%b")
+  ) |>
+  select(month_label, month_abbr, all_of(cause_cols)) |>
+  tidyr::pivot_longer(all_of(cause_cols), names_to = "cause", values_to = "deaths")
+
+# Historical color scheme matching Nightingale's original:
+# Blue for preventable diseases, Red for wounds, Gray for other causes
+nightingale_colors <- c(
+  disease = "#4169E1",  # Royal Blue - diseases (preventable deaths)
+  wounds = "#DC143C",   # Crimson - battle wounds  
+  other = "#696969"     # Dim Gray - other causes
+)
+
+# Create the polar area diagram
+p_ng <- ggplot(ng, aes(x = month_label, y = deaths, fill = cause)) +
+  geom_col(width = 1, colour = "white", linewidth = 0.3, position = "stack") +
+  coord_polar(start = -pi/12) +  # Start from top, rotate slightly
+  scale_y_sqrt(expand = c(0, 0)) +  # Square root scale as in original
+  scale_fill_manual(
+    values = nightingale_colors,
+    name = "Cause of Death",
+    labels = c("Preventable Disease", "Battle Wounds", "Other Causes")
+  ) +
+  labs(
+    title = "DIAGRAM of the CAUSES of MORTALITY\nin the ARMY in the EAST",
+    subtitle = "April 1854 to March 1856",
+    caption = "Area of each wedge proportional to deaths per 1000\nRecreated from Florence Nightingale's original"
+  ) +
+  theme_void(base_size = 11) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    plot.caption = element_text(hjust = 0.5, size = 9, color = "gray40"),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 9),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA)
+  )
+
+print(p_ng)
+
+# Export to outputs directory and root for compatibility
+ggsave("outputs/nightingale_recreation.png", p_ng, width = 8, height = 8, dpi = 300, bg = "white")
+ggsave("nightingale_orig.png", p_ng, width = 8, height = 8, dpi = 300, bg = "white")
+
+```
+
+```{r playfair-recreation}
+# ==== PLAYFAIR TRADE BALANCE CHART ====
+# Recreating William Playfair's line chart showing imports and exports
+# of the East India Company from "The Commercial and Political Atlas" (1786).
+# Playfair invented this form, which became the modern line chart.
+
+pf_path <- need("case2_playfair/data/playfair_raw.csv")
+pf_raw <- readr::read_csv(pf_path, show_col_types = FALSE)
+
+# Standardize column names
+names(pf_raw) <- names(pf_raw) |>
+  stringr::str_replace_all(" ", "_") |>
+  tolower()
+
+# Verify required columns
+stopifnot(all(c("year","exports","imports") %in% names(pf_raw)))
+
+# Prepare data
+pf <- pf_raw |>
+  mutate(year = as.integer(year)) |>
+  arrange(year) |>
+  # Convert to thousands as in original (values seem to be in units that need scaling)
+  mutate(
+    exports_k = exports,  # Assuming data is already in appropriate units
+    imports_k = imports,
+    trade_balance = exports - imports
+  )
+
+# Historical colors inspired by Playfair's engravings:
+# Darker colors mimicking ink on parchment
+playfair_colors <- c(
+  "Exports" = "#8B4513",    # Saddle Brown - representing outgoing trade
+  "Imports" = "#191970"     # Midnight Blue - representing incoming trade
+)
+
+# Create the historical line chart with enhanced styling
+p_pf <- ggplot(pf, aes(x = year)) +
+  # Add filled area between lines to show trade balance (Playfair innovation)
+  geom_ribbon(aes(ymin = pmin(exports_k, imports_k), 
+                  ymax = pmax(exports_k, imports_k)),
+              fill = ifelse(mean(pf$trade_balance) > 0, "#DDA0DD", "#FFB6C1"), 
+              alpha = 0.3) +
+  # Main trade lines with historical line weights
+  geom_line(aes(y = exports_k, colour = "Exports"), linewidth = 1.2) +
+  geom_line(aes(y = imports_k, colour = "Imports"), linewidth = 1.2) +
+  # Add points to emphasize data observations
+  geom_point(aes(y = exports_k, colour = "Exports"), size = 1.5, alpha = 0.7) +
+  geom_point(aes(y = imports_k, colour = "Imports"), size = 1.5, alpha = 0.7) +
+  scale_colour_manual(values = playfair_colors, name = NULL) +
+  scale_x_continuous(
+    breaks = seq(1700, 1800, by = 10),
+    minor_breaks = seq(1700, 1800, by = 5),
+    expand = c(0.02, 0.02)
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 600, by = 100),
+    minor_breaks = seq(0, 600, by = 50),
+    expand = c(0, 0),
+    limits = c(0, NA)
+  ) +
+  labs(
+    title = "Imports and Exports to and from the EAST INDIES",
+    subtitle = paste0("From ", min(pf$year), " to ", max(pf$year)),
+    x = "Year",
+    y = "Value (£ thousands)",
+    caption = "Recreated from William Playfair's Commercial and Political Atlas (1786)\nFirst known use of statistical line chart"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    plot.caption = element_text(hjust = 0.5, size = 9, color = "gray40"),
+    legend.position = "top",
+    legend.direction = "horizontal",
+    legend.text = element_text(size = 11, face = "bold"),
+    panel.grid.major = element_line(color = "gray80", linewidth = 0.5),
+    panel.grid.minor = element_line(color = "gray90", linewidth = 0.3),
+    axis.title = element_text(size = 11, face = "bold"),
+    axis.text = element_text(size = 10),
+    plot.background = element_rect(fill = "#FFF8DC", color = NA),  # Cornsilk background
+    panel.background = element_rect(fill = "#FFF8DC", color = NA)
+  )
+
+print(p_pf)
+
+# Export to outputs directory and root for compatibility  
+ggsave("outputs/playfair_recreation.png", p_pf, width = 10, height = 6, dpi = 300, bg = "#FFF8DC")
+ggsave("playfair_orig.png", p_pf, width = 10, height = 6, dpi = 300, bg = "#FFF8DC")
+
+```
+
+
+
+
+```{r minard-recreation}
+# ==== MINARD NAPOLEON'S MARCH FLOW MAP ====
+# Recreating Charles Joseph Minard's famous flow map of Napoleon's 
+# disastrous 1812 Russian campaign. Considered one of the best 
+# statistical graphics ever made, combining geography, troop losses, 
+# temperature, and time in a single visualization.
+
+# Load required library for data cleaning
+library(janitor)
+
+# Load troop movement data
+troops_raw <- readr::read_csv("case3_minard/data/minard_troops_raw.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  mutate(direction = dplyr::recode(direction, "A" = "advance", "R" = "retreat")) |>
+  arrange(group, long)
+
+# Create segments with constant width (Minard's approach)
+# Each segment represents a stretch with constant army size
+troops <- troops_raw |>
+  group_by(group, direction) |>
+  mutate(
+    # Create segment ID for each stretch between major points
+    segment_id = row_number(),
+    survivors_k = survivors / 1000
+  ) |>
+  ungroup() |>
+  # Add a small offset to ensure segments connect properly
+  arrange(group, direction, long)
+
+# Load temperature data
+temps <- readr::read_csv("case3_minard/data/minard_temp_raw.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  arrange(long) |>
+  # Clean up temperature labels for better display
+  mutate(temp_label = ifelse(is.na(temp), "", paste0(temp, "°")))
+
+# Define coordinate range for consistent plotting
+xr <- range(troops$long)
+yr <- range(troops$lat)
+
+# Historical colors matching Minard's original:
+# Tan/beige for advance (optimism), Black for retreat (death)
+minard_colors <- c(
+  advance = "#D2B48C",   # Tan - the hopeful advance
+  retreat = "#000000"    # Black - the deadly retreat
+)
+
+# ==== MAIN MAP PANEL ====
+# Create discrete segments as Minard did - constant width per segment
+# This avoids the "blob" effect from continuous size scaling
+
+p_path <- ggplot(troops, aes(long, lat)) +
+  # Draw each segment with constant width (Minard's method)
+  # Use geom_segment for discrete line segments instead of continuous paths
+  geom_segment(
+    data = troops |> 
+      group_by(group, direction) |>
+      filter(row_number() < n()) |>  # All but last point in each group
+      mutate(
+        long_end = lead(long),
+        lat_end = lead(lat),
+        survivors_segment = survivors  # Constant width for entire segment
+      ) |>
+      ungroup(),
+    aes(x = long, y = lat, xend = long_end, yend = lat_end,
+        size = survivors_segment, colour = direction),
+    lineend = "butt", alpha = 0.8  # Sharp ends, no rounding
+  ) +
+  # Customize size scaling to match historical proportions
+  scale_size_continuous(
+    range = c(0.5, 12), 
+    breaks = c(10000, 50000, 100000, 200000, 300000),
+    labels = c("10k", "50k", "100k", "200k", "300k"),
+    name = "Army Size",
+    guide = guide_legend(override.aes = list(alpha = 1))
+  ) +
+  scale_colour_manual(values = minard_colors, guide = "none") +
+  scale_x_continuous(
+    limits = xr, 
+    expand = expansion(mult = c(.02, .02)),
+    breaks = seq(24, 38, by = 2)
+  ) +
+  scale_y_continuous(
+    limits = yr,
+    expand = expansion(mult = c(.02, .02))
+  ) +
+  coord_equal() + 
+  theme_void(base_size = 10) +
+  # Add key location labels as in original
+  annotate("text", x = 37.6, y = 55.75, label = "MOSCOU", 
+           size = 3.5, fontface = "bold") +
+  annotate("text", x = 32, y = 54.8, label = "Smolensk", 
+           size = 3, fontface = "italic") +
+  annotate("text", x = 28, y = 54.9, label = "Vitebsk", 
+           size = 3, fontface = "italic") +
+  annotate("text", x = 24, y = 54.9, label = "Kowno", 
+           size = 3, fontface = "italic") +
+  labs(
+    title = "Carte figurative des pertes successives en hommes de l'Armée Française\ndans la campagne de Russie 1812-1813",
+    subtitle = "par M. Minard, Inspecteur Général des Ponts et Chaussées en retraite",
+    caption = "Each segment width represents army size at that stretch • Advance in tan, retreat in black"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+    plot.subtitle = element_text(hjust = 0.5, face = "italic", size = 10),
+    plot.caption = element_text(hjust = 0.5, size = 8, color = "gray40"),
+    legend.position = "right",
+    legend.title = element_text(size = 9, face = "bold"),
+    legend.text = element_text(size = 8),
+    plot.background = element_rect(fill = "#F5F5DC", color = NA),  # Beige background
+    panel.background = element_rect(fill = "#F5F5DC", color = NA)
+  )
+
+# ==== TEMPERATURE PANEL ====
+p_temps <- ggplot(temps, aes(long, temp)) +
+  # Temperature line
+  geom_line(linewidth = 0.8, color = "#4169E1") +
+  # Temperature points
+  geom_point(size = 1.5, color = "#4169E1") +
+  # Temperature labels with better positioning
+  geom_text(aes(label = temp_label), 
+            hjust = 0.5, vjust = -0.8, size = 2.8, 
+            color = "#4169E1", fontface = "bold") +
+  scale_x_continuous(
+    limits = xr, 
+    expand = expansion(mult = c(.02, .02)),
+    breaks = seq(24, 38, by = 2)
+  ) +
+  scale_y_continuous(
+    limits = c(-35, 5), 
+    breaks = seq(-30, 0, 10),
+    labels = function(x) paste0(x, "°")
+  ) +
+  theme_void(base_size = 9) +
+  theme(
+    axis.text.y = element_text(size = 8, color = "#4169E1"),
+    axis.title.y = element_text(size = 9, color = "#4169E1", 
+                                angle = 90, vjust = 0.5),
+    plot.background = element_rect(fill = "#F5F5DC", color = NA),
+    panel.background = element_rect(fill = "#F5F5DC", color = NA),
+    panel.grid.major.y = element_line(color = "gray80", linewidth = 0.3)
+  ) +
+  labs(y = "Température\n(Réaumur)") +
+  coord_cartesian(clip = "off")
+
+# ==== COMBINE PANELS ====
+p_minard <- (p_path / p_temps) + 
+  patchwork::plot_layout(heights = c(3.5, 1)) +
+  patchwork::plot_annotation(
+    theme = theme(plot.background = element_rect(fill = "#F5F5DC", color = NA))
+  )
+
+print(p_minard)
+
+# Export to outputs directory and root for compatibility
+ggsave("outputs/minard_recreation.png", p_minard, width = 12, height = 8, dpi = 300, bg = "#F5F5DC")
+ggsave("minard_orig.png", p_minard, width = 12, height = 8, dpi = 300, bg = "#F5F5DC")
+
+```

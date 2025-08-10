@@ -1,0 +1,148 @@
+---
+title: "User Study Design: Evaluating 19th-Century vs Modern Statistical Visualizations"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+date: "`r Sys.Date()`"
+author: "Yingke He"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(knitr)
+library(DT)
+```
+
+# Overview
+
+This study evaluates whether three celebrated 19th-century statistical visualizations—Nightingale's polar area diagram, Playfair's trade lines, and Minard's flow map—still communicate quantitative information effectively compared to contemporary chart forms.
+
+## Research Questions
+1. Do modern viewers extract information from historical designs as accurately and quickly as from modern equivalents?
+2. Which design elements aid or hinder interpretation?
+3. How do historical graphics perform on objective efficiency measures?
+
+## Study Design
+- **Between-subjects design** with randomized assignment to visualization versions
+- **N=10 pilot study** (graduate students), expandable to N=30 
+- **9 visualizations**: 3 historical recreations + 6 modern counterparts
+- **Measures**: Accuracy, response time, NASA-TLX workload
+- **Duration**: ~20 minutes per participant
+- **Platform**: Online survey
+
+# Background
+
+The study focuses on three iconic 19th-century visualizations:
+
+1. **Florence Nightingale (1858)**: Polar area diagram of Crimean War mortality
+2. **William Playfair (1786)**: Line chart of East India Company trade balance  
+3. **Charles Joseph Minard (1869)**: Flow map of Napoleon's 1812 Russian campaign
+
+These graphics are celebrated in visualization history but have never been empirically tested against modern alternatives. Understanding how early design choices perform compared to contemporary best practices can inform current visualization design.
+
+# Methods
+
+## Experimental Design
+**Between-subjects design** with randomized assignment. Each participant sees one version per dataset to avoid learning effects.
+
+**Variables:**
+- **Independent**: Visualization era (historical vs. modern), task complexity
+- **Dependent**: Accuracy, response time, NASA-TLX workload ratings
+
+## Materials
+
+```{r materials-table, message=FALSE, warning=FALSE, echo=FALSE}
+materials <- tribble(
+  ~Dataset, ~Historical_Version, ~Modern_Version_1, ~Modern_Version_2,
+  "Nightingale", "Polar area diagram", "Stacked bar chart", "Calendar heatmap",
+  "Playfair", "Trade balance lines", "Dual-axis line chart", "Slopegraph", 
+  "Minard", "Geographic flow map", "Small multiple lines", "Temperature correlation"
+)
+
+kable(materials, caption = "Visualization Stimuli")
+```
+
+Each visualization includes three tasks: **Elementary** (value reading), **Intermediate** (comparison/trends), **Advanced** (synthesis/inference).
+
+## Participants
+- **Target**: Graduate students in data-related disciplines
+- **Sample Size**: N=10 pilot study, expandable to N=30
+- **Criteria**: Basic chart familiarity, normal vision, no extensive historical visualization exposure
+
+## Procedure
+
+```{r procedure-flow, message=FALSE, warning=FALSE, echo=FALSE}
+procedure <- tribble(
+  ~Phase, ~Duration, ~Activity,
+  "1. Consent & Demographics", "2 min", "IRB consent, basic demographics",
+  "2. Practice Task", "2 min", "Sample visualization with feedback",
+  "3. Main Tasks (×3)", "12 min", "One visualization per dataset",
+  "4. Workload Assessment", "3 min", "NASA-TLX questionnaire",
+  "5. Post-Study Interview", "1 min", "Strategy and preference questions"
+)
+
+kable(procedure, caption = "Study Session Timeline (~20 minutes total)")
+```
+
+**Timing**: JavaScript-based precision measurement from image display to response submission.
+
+## Data Collection
+- **Automated capture**: Trial-level data (accuracy, timing), demographics, workload ratings
+- **Privacy**: Anonymous data collection on secure university servers
+- **Quality checks**: Attention checks and completion rate monitoring
+
+# Analysis Plan
+
+## Statistical Models
+**Mixed-effects models** with participants as random effects:
+
+- **Accuracy**: `logit(P(correct)) = β₀ + β₁(Era) + β₂(Task_Complexity) + (1 | Participant)`
+- **Response Time**: `log(Response_Time) = β₀ + β₁(Era) + β₂(Task_Complexity) + (1 | Participant)`
+
+## Comparisons
+- **Primary**: Historical vs. modern versions within each dataset
+- **Secondary**: Task complexity interactions, objective metrics (data-ink ratio, visual channels)
+
+# Expected Results
+
+## Hypotheses
+1. **Modern visualizations** will show higher accuracy and faster response times
+2. **Historical visualizations** will show higher cognitive workload (NASA-TLX)  
+3. **Task complexity** will interact with visualization era (historical disadvantage increases with difficulty)
+
+## Implications
+Results will inform **evidence-based design guidelines** and contribute to debates about the enduring value of historical visualization innovations in contemporary practice.
+
+# Implementation
+
+
+## Resources
+- **Platform**: University-licensed survey software (Qualtrics)
+- **Compensation**: $15 gift cards for main study participants
+- **Analysis**: R with lme4, ggplot2 packages
+
+# Ethics
+
+## IRB Requirements
+- **Minimal risk** study with anonymous data collection
+- **Informed consent** embedded in online platform
+- **Voluntary participation** with right to withdraw
+- **Data retention**: 3 years per university policy
+
+## Participant Welfare
+- **20-minute session limit** to prevent fatigue
+- **Clear instructions** and practice tasks to reduce confusion
+- **Emphasis on chart evaluation** rather than personal performance
+
+# Summary
+
+This study provides the first systematic empirical comparison of historical and modern visualization approaches using the same datasets. The between-subjects design with mixed-effects analysis will test whether 19th-century design innovations retain their communicative effectiveness for contemporary viewers.
+
+Results will contribute evidence-based guidelines for visualization design and inform debates about the enduring value of historical visualization innovations.
+
+```{r session-info}
+sessionInfo()
+```

@@ -1,0 +1,73 @@
+---
+title: "Raw‐data collection for historical viz project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+# ------------------------------------------------------------------
+# Adjust this if you knit outside the repo root:
+setwd(here::here())      # requires the 'here' package
+# ------------------------------------------------------------------
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Core data wrangling
+required <- c("tidyverse", "HistData")
+new_pkgs <- required[!(required %in% installed.packages()[,"Package"])]
+if(length(new_pkgs)) install.packages(new_pkgs)
+lapply(required, library, character.only = TRUE)
+
+# Friendly's GDAdata (may come from his R-universe)
+if(!"GDAdata" %in% installed.packages()[,"Package"]) {
+  install.packages("GDAdata", repos = "https://friendly.r-universe.dev")
+}
+#install.packages("GDAdata")
+library(GDAdata)
+
+# `Nightingale` accompanies Friendly & Meyer, *HistData* pkg
+data("Nightingale", package = "HistData")
+
+glimpse(Nightingale)     # sanity check
+
+write_csv(Nightingale,
+          file = "case1_nightingale/data/nightingale_raw.csv")
+
+
+data("Minard.troops", package = "HistData")
+data("Minard.temp",   package = "HistData")
+
+glimpse(Minard.troops)
+glimpse(Minard.temp)
+
+write_csv(Minard.troops,
+          file = "case3_minard/data/minard_troops_raw.csv")
+write_csv(Minard.temp,
+          file = "case3_minard/data/minard_temp_raw.csv")
+
+data("EastIndiesTrade", package = "GDAdata")   # yearly exports & imports
+
+glimpse(EastIndiesTrade)
+
+write_csv(EastIndiesTrade,
+          file = "case2_playfair/data/playfair_raw.csv")
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

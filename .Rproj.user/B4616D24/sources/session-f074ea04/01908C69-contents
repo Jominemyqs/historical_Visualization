@@ -1,0 +1,391 @@
+---
+title: "User Study Design: Evaluating 19th-Century vs Modern Statistical Visualizations"
+subtitle: "Research Protocol"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+date: "`r Sys.Date()`"
+author: "Yingke He"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(knitr)
+library(DT)
+```
+
+# Executive Summary
+
+## Research Objective
+This study evaluates whether three celebrated 19th-century statistical visualizations—Nightingale's polar area diagram, Playfair's trade lines, and Minard's flow map—still communicate quantitative information effectively compared to contemporary chart forms.
+
+## Primary Research Questions
+1. **Objective Efficiency**: How do historical graphics perform on measures like data-ink ratio and visual channel economy?
+2. **User Performance**: Do modern viewers extract information from historical designs as accurately and quickly as from modern equivalents?
+3. **Design Elements**: Which specific visual encoding choices aid or hinder interpretation?
+
+## Study Design Overview
+- **Design**: Between-subjects comparison with randomized assignment
+- **Participants**: N=10 pilot study (graduate students), expandable to N=30 for main study
+- **Materials**: 9 visualizations (3 historical recreations + 6 modern counterparts)
+- **Measures**: Accuracy, response time, cognitive workload (NASA-TLX)
+- **Duration**: ~20 minutes per participant
+- **Platform**: Online survey with embedded visualizations
+
+# Background and Significance
+
+## Historical Context
+The visualizations selected represent three distinct innovations in statistical graphics developed between 1786-1869:
+
+1. **Florence Nightingale (1858)**: Polar area "coxcomb" diagram showing Crimean War mortality
+2. **William Playfair (1786)**: Line chart showing East India Company trade balance  
+3. **Charles Joseph Minard (1869)**: Flow map of Napoleon's 1812 Russian campaign
+
+These graphics are celebrated in visualization history (Tufte, 1983; Friendly & Wainer, 2021) but have never been empirically tested against modern alternatives.
+
+## Contemporary Relevance
+Understanding how early designers balanced data density, legibility, and aesthetic choices can inform modern visualization practice. This study tests whether historical innovations retain their communicative power or whether contemporary design principles (minimalism, direct encoding, accessibility) provide superior user experience.
+
+## Expected Contributions
+- **Empirical evidence** on the effectiveness of historical vs. modern visualization approaches
+- **Design principles** derived from user performance data
+- **Methodological framework** for comparative visualization evaluation
+
+# Study Design and Methods
+
+## Experimental Design
+
+### Design Type
+**Between-subjects design** with randomized assignment to visualization versions. Each participant sees one version per dataset to avoid learning effects.
+
+### Independent Variables
+- **Visualization Era**: Historical vs. Modern (primary factor)
+- **Chart Type**: Different modern alternatives per dataset
+- **Task Complexity**: Elementary, Intermediate, Advanced (within-subjects)
+
+### Dependent Variables
+- **Accuracy**: Binary correct/incorrect responses
+- **Response Time**: Seconds from image display to response submission
+- **Cognitive Workload**: NASA-TLX ratings across six dimensions
+- **Confidence**: 5-point scale self-reported confidence
+
+## Materials
+
+### Visualization Stimuli
+
+```{r materials-table, message=FALSE, warning=FALSE, echo=FALSE}
+materials <- tribble(
+  ~Dataset, ~Historical_Version, ~Modern_Version_1, ~Modern_Version_2, ~Data_Source,
+  "Nightingale", "Polar area diagram", "Stacked bar chart", "Calendar heatmap", "Crimean War mortality (HistData)",
+  "Playfair", "Trade balance lines", "Dual-axis line chart", "Slopegraph", "East India trade (GDAdata)", 
+  "Minard", "Geographic flow map", "Small multiple lines", "Temperature correlation", "Napoleon campaign (HistData)"
+)
+
+kable(materials, caption = "Visualization Stimuli by Dataset and Era")
+```
+
+All visualizations are:
+- **High resolution** (300 DPI) for clear display
+- **Consistent sizing** (standardized dimensions)
+- **Authentic recreation** (historical versions faithful to originals)
+- **Evidence-based design** (modern versions follow best practices)
+
+### Comprehension Tasks
+
+Each visualization includes three tasks of increasing complexity:
+
+```{r tasks-table, message=FALSE, warning=FALSE, echo=FALSE}
+tasks <- tribble(
+  ~Task_Level, ~Cognitive_Process, ~Example_Question, ~Expected_Difficulty,
+  "Elementary", "Value reading", "What was the primary cause of death in January 1855?", "Low cognitive load",
+  "Intermediate", "Comparison/trends", "In which month did disease deaths peak?", "Moderate cognitive load",
+  "Advanced", "Synthesis/inference", "What evidence supports the effectiveness of sanitary reforms?", "High cognitive load"
+)
+
+kable(tasks, caption = "Task Complexity Levels and Cognitive Demands")
+```
+
+## Participants
+
+### Target Population
+**Graduate students** in data-related disciplines (statistics, computer science, policy, business analytics) representing our target audience of quantitatively literate users.
+
+### Sample Size
+- **Pilot Study**: N=10 (adequate for detecting large effects, d > 0.8)
+- **Main Study**: N=30 (power = 0.80 for medium effects, d = 0.5, α = 0.05)
+
+### Inclusion Criteria
+- Graduate student status
+- Basic familiarity with statistical charts
+- Normal or corrected-to-normal vision
+- English proficiency for task comprehension
+
+### Exclusion Criteria
+- Colorblindness (due to color-coded visualizations)
+- Prior extensive exposure to historical visualizations
+- Incomplete survey responses
+
+## Procedure
+
+### Pre-Study Setup
+1. **Randomization**: Automated assignment to visualization versions using Latin square design
+2. **Platform Setup**: Online survey hosted on secure university servers
+3. **Device Check**: Participants verify adequate screen size and resolution
+
+### Study Session Flow
+
+```{r procedure-flow, message=FALSE, warning=FALSE, echo=FALSE}
+procedure <- tribble(
+  ~Phase, ~Duration, ~Activity, ~Measures_Collected,
+  "1. Consent & Demographics", "2 min", "IRB consent, basic demographics", "Age, education, visualization experience",
+  "2. Practice Task", "2 min", "Sample visualization with feedback", "Familiarization (no data)",
+  "3. Main Tasks (×3)", "12 min", "One visualization per dataset", "Accuracy, time, confidence per task",
+  "4. Workload Assessment", "3 min", "NASA-TLX questionnaire", "Mental demand, effort, frustration ratings",
+  "5. Post-Study Interview", "1 min", "Strategy and preference questions", "Qualitative feedback"
+)
+
+kable(procedure, caption = "Study Session Timeline and Data Collection")
+```
+
+### Timing Methodology
+**JavaScript-based precision timing**:
+- **Start**: Image fully loaded and displayed
+- **End**: Submit button clicked
+- **Granularity**: Millisecond precision
+- **Validation**: Exclude responses < 1 second (likely accidental) or > 300 seconds (likely distracted)
+
+## Data Collection Protocol
+
+### Automated Data Capture
+- **Trial-level data**: Participant ID, visualization version, task, response, timing
+- **Session-level data**: Demographics, workload ratings, qualitative feedback
+- **Technical data**: Browser, screen resolution, interaction logs
+
+### Data Quality Assurance
+- **Attention checks**: Embedded validation questions
+- **Completion rates**: Track partial vs. complete responses
+- **Technical issues**: Log any platform errors or timing failures
+
+### Privacy and Security
+- **Anonymous**: No personally identifiable information collected
+- **Secure**: University-hosted servers with encrypted data transmission
+- **Retention**: Data stored for 3 years per university policy
+
+# Statistical Analysis Plan
+
+## Primary Analyses
+
+### Mixed-Effects Models
+Following established best practices for repeated-measures visualization studies:
+
+**Accuracy Model (Logistic Regression)**:
+```
+logit(P(correct)) = β₀ + β₁(Era) + β₂(Task_Complexity) + (1 | Participant)
+```
+
+**Response Time Model (Linear Regression)**:
+```
+log(Response_Time) = β₀ + β₁(Era) + β₂(Task_Complexity) + (1 | Participant)
+```
+
+### Effect Size Calculations
+- **Accuracy**: Odds ratios with 95% confidence intervals
+- **Response Time**: Percent change (modern vs. historical) with bootstrapped CIs
+- **Workload**: Cohen's d for standardized mean differences
+
+### Post-Hoc Comparisons
+- **Historical vs. Modern**: Primary comparison within each dataset
+- **Modern Variants**: Exploratory comparison between modern alternatives
+- **Task Complexity**: Interaction effects with visualization era
+
+## Secondary Analyses
+
+### Objective Metrics Assessment
+- **Data-Ink Ratio**: Calculated using pixel analysis of visualization elements
+- **Visual Channel Count**: Inventory following Cleveland & McGill hierarchy
+- **Information Density**: Shannon entropy of encoded variables
+
+### Qualitative Analysis
+- **Strategy Coding**: Thematic analysis of user-reported approaches
+- **Error Patterns**: Classification of incorrect responses by type
+- **Preference Reasoning**: Analysis of post-task preference explanations
+
+# Expected Results and Implications
+
+## Hypotheses
+
+### Primary Hypotheses
+1. **Accuracy**: Modern visualizations will show higher accuracy rates (H₁: β₁ > 0)
+2. **Speed**: Modern visualizations will show faster response times (H₁: β₁ < 0) 
+3. **Workload**: Historical visualizations will show higher cognitive load (H₁: μ_historical > μ_modern)
+
+### Secondary Hypotheses
+4. **Task Interaction**: Historical disadvantage will increase with task complexity
+5. **Individual Differences**: Effects will vary by visualization experience level
+6. **Design Elements**: Specific encoding choices will predict performance differences
+
+### Alternative Outcomes
+- **Historical Competitiveness**: Some historical designs may match modern performance
+- **Task-Specific Advantages**: Complex tasks might favor rich historical encodings
+- **Aesthetic Value**: Historical designs might score higher on subjective appeal
+
+## Practical Implications
+
+### For Visualization Design
+- **Evidence-based guidelines** on when to use historical vs. modern approaches
+- **Design principles** derived from successful encoding strategies
+- **Accessibility considerations** for contemporary visualization practice
+
+### For Education
+- **Curriculum implications** for teaching visualization history
+- **Case studies** demonstrating evolution of design thinking
+- **Critical evaluation** of "classic" visualizations
+
+### For Research
+- **Methodological framework** for comparative visualization evaluation
+- **Baseline data** for future historical visualization studies
+- **Open dataset** for replication and extension
+
+# Risk Assessment and Mitigation
+
+## Potential Risks
+
+### Technical Risks
+- **Platform Issues**: Server downtime, browser compatibility problems
+- **Timing Accuracy**: JavaScript timing inconsistencies across devices
+- **Data Loss**: Incomplete responses due to technical failures
+
+**Mitigation**: Pre-testing across browsers, backup data collection methods, automated error logging
+
+### Design Risks
+- **Learning Effects**: Participants gaining experience across tasks
+- **Order Effects**: Task sequence influencing performance
+- **Fatigue Effects**: Declining performance over session
+
+**Mitigation**: Between-subjects design, randomized task order, session length limits
+
+### Participant Risks
+- **Recruitment Challenges**: Difficulty reaching target sample size
+- **Motivation Issues**: Reduced effort on unpaid voluntary participation
+- **Comprehension Problems**: Task misunderstanding affecting validity
+
+**Mitigation**: Multiple recruitment channels, clear instructions, practice tasks with feedback
+
+## Quality Control Measures
+
+### Data Quality
+- **Exclusion Criteria**: Clear rules for incomplete or invalid responses
+- **Outlier Detection**: Statistical methods for identifying anomalous response times
+- **Validation Checks**: Cross-verification of key findings
+
+### Study Validity
+- **Internal Validity**: Random assignment, controlled conditions
+- **External Validity**: Representative tasks, realistic visualization contexts
+- **Construct Validity**: Established measures (NASA-TLX), pilot-tested tasks
+
+# Timeline and Resources
+
+## Implementation Schedule
+
+```{r timeline-table, message=FALSE, warning=FALSE, echo=FALSE}
+timeline <- tribble(
+  ~Phase, ~Duration, ~Deliverables, ~Resources_Needed,
+  "Protocol Finalization", "1 week", "Complete study materials", "Faculty review, IRB documentation",
+  "IRB Submission", "2-3 weeks", "Ethics approval", "IRB forms, consent documents",
+  "Platform Development", "1 week", "Functional online survey", "Web development, testing",
+  "Pilot Testing", "1 week", "N=10 complete responses", "Participant recruitment",
+  "Data Analysis", "1 week", "Preliminary results", "Statistical analysis",
+  "Protocol Refinement", "1 week", "Revised methodology", "Based on pilot findings",
+  "Main Study", "2-3 weeks", "N=30 complete responses", "Expanded recruitment",
+  "Final Analysis", "2 weeks", "Complete results", "Statistical analysis, reporting"
+)
+
+kable(timeline, caption = "Project Implementation Timeline")
+```
+
+## Resource Requirements
+
+### Personnel
+- **Principal Investigator**: Study design, analysis, reporting
+- **Technical Support**: Platform development, data management
+- **Faculty Advisor**: Oversight, methodological guidance
+
+### Technology
+- **Survey Platform**: University-licensed Qualtrics or similar
+- **Statistical Software**: R with lme4, ggplot2 packages
+- **Data Storage**: University secure servers
+
+### Participant Compensation
+- **Pilot Study**: Voluntary participation or course credit
+- **Main Study**: $15 gift cards or course credit (budget: $450)
+
+# Ethical Considerations
+
+## IRB Requirements
+
+### Human Subjects Protection
+- **Minimal Risk**: No physical, psychological, or social harm anticipated
+- **Informed Consent**: Clear explanation of study purpose and procedures
+- **Voluntary Participation**: Right to withdraw without penalty
+- **Data Privacy**: Anonymous data collection and secure storage
+
+### Consent Process
+- **Online Consent Form**: Embedded in survey platform
+- **Key Elements**: Study purpose, time commitment, data use, contact information
+- **Documentation**: Electronic consent with timestamp
+
+## Participant Welfare
+
+### Physical Considerations
+- **Screen Time**: Limited 20-minute sessions to prevent eye strain
+- **Accessibility**: Compatible with screen readers and assistive technologies
+- **Comfort**: Self-paced progression through tasks
+
+### Psychological Considerations
+- **Performance Anxiety**: Emphasis on chart evaluation rather than personal ability
+- **Frustration**: Clear instructions and practice tasks to reduce confusion
+- **Feedback**: Debriefing information about study purpose and findings
+
+# Data Management Plan
+
+## Data Collection
+- **Format**: CSV exports from survey platform
+- **Frequency**: Real-time collection with weekly backups
+- **Validation**: Automated checks for completeness and consistency
+
+## Data Storage
+- **Primary**: University secure servers with access controls
+- **Backup**: Encrypted external storage updated weekly
+- **Retention**: 3 years per university policy, then secure deletion
+
+## Data Sharing
+- **Publication**: Aggregated results in academic publications
+- **Replication**: De-identified dataset available upon request
+- **Collaboration**: Shared with faculty advisor and potential collaborators
+
+# Conclusion
+
+This user study design provides a rigorous empirical test of whether 19th-century visualization innovations retain their communicative effectiveness for contemporary viewers. The mixed-methods approach combines quantitative performance measures with qualitative insights to produce actionable findings for visualization design and education.
+
+The study addresses a significant gap in visualization research by providing the first systematic comparison of historical and modern chart types using the same underlying datasets. Results will contribute to evidence-based visualization design principles and inform debates about the enduring value of historical design innovations.
+
+## Next Steps for Faculty Review
+
+1. **Methodological Feedback**: Review of experimental design and statistical approach
+2. **Practical Considerations**: Assessment of feasibility and resource requirements  
+3. **IRB Preparation**: Guidance on ethics documentation and approval process
+4. **Timeline Approval**: Confirmation of project schedule and milestones
+
+---
+
+**Contact Information**: [Your contact details]  
+**Faculty Advisor**: [Advisor contact details]  
+**IRB Reference**: [When available]
+
+```{r session-info}
+# Technical details for reproducibility
+sessionInfo()
+```

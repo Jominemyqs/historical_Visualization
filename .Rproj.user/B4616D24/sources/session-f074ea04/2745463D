@@ -1,11 +1,11 @@
 {
     "id": "2745463D",
-    "path": null,
-    "project_path": null,
+    "path": "C:/Users/yuqiu/OneDrive/Desktop/School/HYK/Rohan Research/historical_Visualization/data_collection.Rmd",
+    "project_path": "data_collection.Rmd",
     "type": "r_markdown",
-    "hash": "0",
+    "hash": "3317335134",
     "contents": "",
-    "dirty": true,
+    "dirty": false,
     "created": 1754432391915.0,
     "source_on_save": false,
     "relative_order": 1,
@@ -15,14 +15,14 @@
         "Source": "Source",
         "cursorPosition": "59,32",
         "scrollLine": "39",
-        "last_setup_crc32": "932bebecc2824dd4"
+        "last_setup_crc32": ""
     },
     "folds": "",
-    "lastKnownWriteTime": 72057594306363392,
-    "encoding": "",
+    "lastKnownWriteTime": 1754711791,
+    "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1754448970185,
+    "last_content_update": 1754711791518,
     "read_only": false,
     "read_only_alternatives": []
 }
